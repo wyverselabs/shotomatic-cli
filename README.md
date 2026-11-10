@@ -6,7 +6,7 @@ Stdio bridge that lets MCP clients (Claude Code, Claude Desktop, Codex) talk to 
 
 ## Requirements
 
-Shotomatic for Mac with MCP access enabled in its settings, and Node 18 or later. macOS only.
+Shotomatic for Mac with Settings > AI agents turned on, and Node 18 or later. macOS only.
 
 ## Setup
 
@@ -43,6 +43,10 @@ command = "npx"
 args = ["-y", "shotomatic", "mcp"]
 ```
 
+## Agent skill
+
+`skills/shotomatic/SKILL.md` describes the tools and three common workflows (book pages to PDF, web pages, step-by-step guides). Copy it into your agent's skills folder if your client supports skills.
+
 ## How it works
 
 The app listens on a Unix socket at `~/Library/Application Support/Shotomatic/mcp/mcp.sock` and speaks MCP over newline-delimited JSON-RPC. `shotomatic mcp` copies stdin to that socket and the socket to stdout, and exits when either side closes. If the app is not running, the bridge starts it once in the background (without bringing it to the front) and waits for the socket.
@@ -70,7 +74,7 @@ Messages go to stderr, which MCP clients show in their server log. Each failure 
 | Exit | Message starts with | What to do |
 | ---- | ------------------- | ---------- |
 | 10 | Could not find "Shotomatic" on this Mac | Install Shotomatic for Mac and open it once. |
-| 11 | ... installed but MCP access is turned off | Open Shotomatic, go to Settings, turn on MCP access, restart your MCP client. |
+| 11 | ... installed but MCP access is turned off | Open Shotomatic, go to Settings > AI agents, turn on "Let AI agents use Shotomatic", restart your MCP client. |
 | 12 | The socket ... exists but refuses connections | A crashed or force-quit app left a stale socket. Quit Shotomatic fully and reopen it; if it persists, delete the socket file. |
 | 13 | Permission denied while connecting | Run the MCP client as the same macOS user that runs Shotomatic. |
 | 14 | Timed out ... waiting for "Shotomatic" / ... is not running | Open Shotomatic yourself and check MCP access is on; use `--wait <seconds>` for slow starts. |
