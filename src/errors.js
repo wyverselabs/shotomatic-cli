@@ -53,7 +53,14 @@ export const timedOut = (appName, socketPath, seconds) =>
 export const appNotRunning = (appName, socketPath) =>
   new BridgeError(
     ExitCode.timeout,
-    `"${appName}" is not running (no socket at ${socketPath}) and launching was disabled. Open Shotomatic and try again.`,
+    `"${appName}" is not running (no socket at ${socketPath}) and launching was disabled. ` +
+      `Open Shotomatic, make sure Settings > AI agents is turned on, then restart your MCP client.`,
+  );
+
+export const socketPathTooLong = (socketPath) =>
+  new BridgeError(
+    ExitCode.usage,
+    `The socket path is too long for a macOS Unix socket (limit 103 bytes): ${socketPath}. Use a shorter --socket path.`,
   );
 
 export const connectionFailed = (socketPath, cause) =>

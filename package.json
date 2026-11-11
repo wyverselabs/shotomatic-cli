@@ -15,6 +15,7 @@
     "claude",
     "codex"
   ],
+  "homepage": "https://shotomatic.com",
   "license": "UNLICENSED",
   "type": "module",
   "bin": {
@@ -24,7 +25,8 @@
     "bin",
     "src",
     "skills",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "test": "node --test"
@@ -33,6 +35,6 @@
     "darwin"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=18.3.0"
   }
 }

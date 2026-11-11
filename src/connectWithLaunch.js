@@ -7,11 +7,13 @@ import {
   connectionFailed,
   mcpAccessOff,
   permissionDenied,
+  socketPathTooLong,
   staleSocket,
   timedOut,
 } from "./errors.js";
 
 const POLL_INTERVAL_MS = 250;
+const MAX_SOCKET_PATH_BYTES = 103;
 
 const sleep = (ms, interrupt) =>
   new Promise((resolve) => {
@@ -27,6 +29,7 @@ const exists = (target) => fs.existsSync(target);
 
 const failureFor = ({ error, target, launched, waitSeconds }) => {
   const { socketPath, appName } = target;
+  if (error.code === "EINVAL" && Buffer.byteLength(socketPath) > MAX_SOCKET_PATH_BYTES) return socketPathTooLong(socketPath);
   if (error.code === "EACCES" || error.code === "EPERM") return permissionDenied(socketPath);
   if (error.code === "ECONNREFUSED") return staleSocket(socketPath);
   if (error.code !== "ENOENT" && error.code !== "ENOTDIR") return connectionFailed(socketPath, error);
@@ -41,7 +44,7 @@ const failureFor = ({ error, target, launched, waitSeconds }) => {
   return appNotRunning(appName, socketPath);
 };
 
-const isFatalImmediately = (error) => error.code === "EACCES" || error.code === "EPERM";
+const isFatalImmediately = (error) => error.code === "EACCES" || error.code === "EPERM" || error.code === "EINVAL";
 
 export const connectWithLaunch = async ({ target, launch, waitSeconds, launcher, log, interrupt }) => {
   log(`connecting to ${target.socketPath}`);

@@ -22,6 +22,18 @@ const parseWait = (raw) => {
   return seconds;
 };
 
+const APP_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 ._()-]{0,63}$/;
+
+const parseAppName = (raw) => {
+  if (raw === undefined) return undefined;
+  if (!APP_NAME_PATTERN.test(raw) || raw.includes("..") || raw.toLowerCase().endsWith(".app")) {
+    throw usageError(
+      `Invalid app name "${raw}": use the profile name only, for example "Shotomatic (Dev)". Paths are not accepted.`,
+    );
+  }
+  return raw;
+};
+
 export const parseCommandLine = (argv, env) => {
   let parsed;
   try {
@@ -36,7 +48,7 @@ export const parseCommandLine = (argv, env) => {
     help: values.help === true,
     version: values.version === true,
     socket: values.socket ?? (env.SHOTOMATIC_MCP_SOCKET || undefined),
-    appName: values["app-name"] ?? (env.SHOTOMATIC_APP_NAME || undefined),
+    appName: parseAppName(values["app-name"] ?? (env.SHOTOMATIC_APP_NAME || undefined)),
     waitSeconds: parseWait(values.wait),
     launch: values["no-launch"] !== true,
     verbose: values.verbose === true,

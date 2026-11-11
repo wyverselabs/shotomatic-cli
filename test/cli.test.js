@@ -241,3 +241,20 @@ test("a normal failure-free session writes nothing to stderr, --verbose writes d
     removeDir(dir);
   }
 });
+
+test("--app-name rejects paths so the launcher can only open a profile by name", async () => {
+  for (const name of ["/Applications/Other.app", "../x", "Other.app", ""]) {
+    const result = await run(["mcp", "--app-name", name]);
+    assert.equal(result.code, 2, name);
+    assert.match(result.stderr, /Invalid app name/);
+    assert.equal(result.stdout, "");
+  }
+});
+
+test("a socket path longer than a Unix socket allows gets a clear error, not EINVAL", async () => {
+  const long = path.join("/tmp", "x".repeat(120), "s.sock");
+  const result = await run(["mcp", "--no-launch", "--socket", long]);
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /too long/);
+  assert.equal(result.stdout, "");
+});
