@@ -2,7 +2,7 @@
   "name": "shotomatic",
   "version": "0.1.0",
   "mcpName": "io.github.wyverselabs/shotomatic",
-  "description": "Stdio bridge that connects MCP clients (Claude Code, Claude Desktop, Codex) to the Shotomatic Mac app.",
+  "description": "Stdio bridge that connects MCP clients (Claude Code, Claude Desktop, Codex) to the Shotomatic app on macOS and Windows.",
   "keywords": [
     "shotomatic",
     "mcp",
@@ -12,6 +12,7 @@
     "auto-capture",
     "screen-capture",
     "macos",
+    "windows",
     "ai-agent",
     "claude",
     "codex"
@@ -40,7 +41,8 @@
     "test": "node --test"
   },
   "os": [
-    "darwin"
+    "darwin",
+    "win32"
   ],
   "engines": {
     "node": ">=18.3.0"

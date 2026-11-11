@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
@@ -52,4 +53,11 @@ export const runBin = (args, { env = {}, input } = {}) => {
   return { child, exited };
 };
 
-export const darwinOnly = { skip: process.platform !== "darwin" && "bridge is macOS only" };
+export const darwinOnly = { skip: process.platform !== "darwin" && "exercises the macOS Unix socket" };
+export const windowsOnly = { skip: process.platform !== "win32" && "exercises the Windows named pipe" };
+
+/** A fresh local server address: a Unix socket in `dir`, or a named pipe on Windows. */
+export const tempServerAddress = (dir) => {
+  if (process.platform === "win32") return `\\\\.\\pipe\\shotomatic-cli-test-${crypto.randomBytes(8).toString("hex")}`;
+  return path.join(dir, "s.sock");
+};

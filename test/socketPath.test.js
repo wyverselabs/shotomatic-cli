@@ -29,3 +29,28 @@ test("explicit socket wins over app name and disables launching unless an app na
 test("default target can launch", () => {
   assert.equal(resolveTarget({ homedir }).canLaunch, true);
 });
+
+test("on Windows the default target is the pipe name file in the app's roaming profile, and never launches", () => {
+  const env = { APPDATA: "C:\\Users\\someone\\AppData\\Roaming" };
+  assert.deepEqual(resolveTarget({ homedir: "C:\\Users\\someone", platform: "win32", env }), {
+    pipeNameFile: "C:\\Users\\someone\\AppData\\Roaming\\Shotomatic\\mcp\\pipe",
+    appName: "Shotomatic",
+    canLaunch: false,
+  });
+});
+
+test("on Windows a named profile falls back to the home folder when APPDATA is unset", () => {
+  const target = resolveTarget({ homedir: "C:\\Users\\someone", appName: "Shotomatic (Dev)", platform: "win32", env: {} });
+  assert.equal(target.pipeNameFile, "C:\\Users\\someone\\AppData\\Roaming\\Shotomatic (Dev)\\mcp\\pipe");
+});
+
+test("on Windows an explicit pipe is used as given and never launches", () => {
+  const target = resolveTarget({
+    socket: "\\\\.\\pipe\\shotomatic-mcp-test",
+    appName: "Shotomatic (QA)",
+    homedir: "C:\\Users\\someone",
+    platform: "win32",
+    env: {},
+  });
+  assert.deepEqual(target, { socketPath: "\\\\.\\pipe\\shotomatic-mcp-test", appName: "Shotomatic (QA)", canLaunch: false });
+});

@@ -13,18 +13,21 @@ Run "shotomatic mcp --help" for the bridge options.
 export const MCP_USAGE = `Usage: shotomatic mcp [options]
 
 Relays MCP messages between stdin/stdout and the Shotomatic app over a local
-Unix socket. Add it to an MCP client as: npx -y shotomatic mcp
+Unix socket (macOS) or named pipe (Windows). Add it to an MCP client as:
+npx -y shotomatic mcp
 
 Options:
-  --socket <path>      Connect to this socket (env: SHOTOMATIC_MCP_SOCKET)
+  --socket <path>      Connect to this socket or pipe (env: SHOTOMATIC_MCP_SOCKET)
   --app-name <name>    Target another profile, e.g. "Shotomatic (Dev)"
                        (env: SHOTOMATIC_APP_NAME)
   --wait <seconds>     Seconds to wait for the app after launching it (default 15)
   --no-launch          Never start the app; fail if the socket is unavailable
+                       (the bridge starts the app on macOS only)
   --verbose            Print connection diagnostics to stderr
   -h, --help           Show help
 
-Default socket: ~/Library/Application Support/Shotomatic/mcp/mcp.sock
+Default socket (macOS): ~/Library/Application Support/Shotomatic/mcp/mcp.sock
+Default pipe (Windows): the name in %APPDATA%\\Shotomatic\\mcp\\pipe
 
 Exit codes:
   0   session ended normally
@@ -35,5 +38,5 @@ Exit codes:
   12  stale socket (connection refused)
   13  permission denied on the socket
   14  timed out waiting for the app
-  15  unsupported platform (macOS only)
+  15  unsupported platform (macOS and Windows only)
 `;

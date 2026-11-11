@@ -8,17 +8,27 @@ export class BridgeError extends Error {
   }
 }
 
+const isWindows = (platform) => platform === "win32";
+
 export const unsupportedPlatform = (platform) =>
   new BridgeError(
     ExitCode.unsupportedPlatform,
-    `Shotomatic only runs on macOS, and this bridge cannot work on "${platform}". Run it on the Mac that has Shotomatic installed.`,
+    `Shotomatic only runs on macOS and Windows, and this bridge cannot work on "${platform}". ` +
+      `Run it on the computer that has Shotomatic installed.`,
   );
 
-export const appNotInstalled = (appName) =>
-  new BridgeError(
+export const appNotInstalled = (appName, platform) => {
+  if (isWindows(platform)) {
+    return new BridgeError(
+      ExitCode.appNotInstalled,
+      `Could not find "${appName}" on this PC. Install Shotomatic for Windows and open it once, then restart your MCP client.`,
+    );
+  }
+  return new BridgeError(
     ExitCode.appNotInstalled,
     `Could not find "${appName}" on this Mac. Install Shotomatic for Mac and open it once, then restart your MCP client.`,
   );
+};
 
 export const mcpAccessOff = (appName, directory) =>
   new BridgeError(
@@ -35,12 +45,28 @@ export const staleSocket = (socketPath) =>
       `Quit Shotomatic completely and open it again; if the problem persists, delete that file and open Shotomatic.`,
   );
 
-export const permissionDenied = (socketPath) =>
+export const stalePipeName = (pipeNameFile) =>
   new BridgeError(
+    ExitCode.staleSocket,
+    `The pipe named in ${pipeNameFile} no longer exists. It is probably left over from a crashed or force-quit app. ` +
+      `Quit Shotomatic completely and open it again; it publishes a new pipe name when it starts listening.`,
+  );
+
+export const permissionDenied = (socketPath, platform) => {
+  if (isWindows(platform)) {
+    return new BridgeError(
+      ExitCode.permissionDenied,
+      `Permission denied while connecting to ${socketPath}. Shotomatic only accepts programs signed in as its own ` +
+        `Windows user on this PC, and refuses network logons such as SSH sessions or file sharing. ` +
+        `Run your MCP client on this PC, in the same Windows session as Shotomatic.`,
+    );
+  }
+  return new BridgeError(
     ExitCode.permissionDenied,
     `Permission denied while connecting to ${socketPath}. The socket belongs to another macOS user or has wrong permissions. ` +
       `Run your MCP client as the same user that runs Shotomatic.`,
   );
+};
 
 export const timedOut = (appName, socketPath, seconds) =>
   new BridgeError(
@@ -50,12 +76,19 @@ export const timedOut = (appName, socketPath, seconds) =>
       `Use --wait <seconds> to wait longer.`,
   );
 
-export const appNotRunning = (appName, socketPath) =>
-  new BridgeError(
+export const appNotRunning = (appName, socketPath, platform) => {
+  const nextStep = `Open Shotomatic, make sure Settings > AI agents is turned on, then restart your MCP client.`;
+  if (isWindows(platform)) {
+    return new BridgeError(
+      ExitCode.timeout,
+      `"${appName}" is not running (no pipe name at ${socketPath}), and the bridge cannot start it on Windows. ${nextStep}`,
+    );
+  }
+  return new BridgeError(
     ExitCode.timeout,
-    `"${appName}" is not running (no socket at ${socketPath}) and launching was disabled. ` +
-      `Open Shotomatic, make sure Settings > AI agents is turned on, then restart your MCP client.`,
+    `"${appName}" is not running (no socket at ${socketPath}) and launching was disabled. ${nextStep}`,
   );
+};
 
 export const socketPathTooLong = (socketPath) =>
   new BridgeError(
