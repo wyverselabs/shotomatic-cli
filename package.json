@@ -24,7 +24,7 @@
   "bugs": {
     "url": "https://github.com/wyverselabs/shotomatic-cli/issues"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "shotomatic": "bin/shotomatic.js"

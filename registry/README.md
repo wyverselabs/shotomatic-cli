@@ -26,7 +26,7 @@ mcp-publisher publish
 | ---- | ----- |
 | Namespace / server name | `io.github.wyverselabs/shotomatic` (GitHub organization namespace). `package.json` carries the same string as `"mcpName"`. Publishing to the registry needs an owner of the `wyverselabs` organization: `mcp-publisher login github` with a token that has the organization, or GitHub Actions OIDC from this repository. |
 | GitHub repository URL | `https://github.com/wyverselabs/shotomatic-cli` (private until the package is published; the registry listing needs it public). |
-| License (**OWNER**) | `package.json` says `UNLICENSED` and there is no LICENSE file. Choose one before publishing publicly. |
+| License | MIT (`LICENSE`, copyright Wyverse Labs). |
 | First version | `0.1.0` today. The version in `server.json` (both places) must equal the published npm version. |
 
 ## server.json
