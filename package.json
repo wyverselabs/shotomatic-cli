@@ -1,6 +1,7 @@
 {
   "name": "shotomatic",
   "version": "0.1.0",
+  "mcpName": "io.github.wyverselabs/shotomatic",
   "description": "Stdio bridge that connects MCP clients (Claude Code, Claude Desktop, Codex) to the Shotomatic Mac app.",
   "keywords": [
     "shotomatic",
@@ -16,6 +17,13 @@
     "codex"
   ],
   "homepage": "https://shotomatic.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wyverselabs/shotomatic-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wyverselabs/shotomatic-cli/issues"
+  },
   "license": "UNLICENSED",
   "type": "module",
   "bin": {

@@ -24,23 +24,27 @@ mcp-publisher publish
 
 | Item | Value |
 | ---- | ----- |
-| Namespace / server name (**OWNER**) | `io.github.<OWNER-GITHUB-USER-OR-ORG>/shotomatic` or `com.shotomatic/shotomatic`. Put the same string in `package.json` as `"mcpName"` before publishing. |
-| GitHub repository URL (**OWNER**) | Not created yet. `repository` is left out of `server.json` until it exists; add `{"url": "https://github.com/<OWNER>/<REPO>", "source": "github"}` here and `repository` in `package.json`. |
+| Namespace / server name | `io.github.wyverselabs/shotomatic` (GitHub organization namespace). `package.json` carries the same string as `"mcpName"`. Publishing to the registry needs an owner of the `wyverselabs` organization: `mcp-publisher login github` with a token that has the organization, or GitHub Actions OIDC from this repository. |
+| GitHub repository URL | `https://github.com/wyverselabs/shotomatic-cli` (private until the package is published; the registry listing needs it public). |
 | License (**OWNER**) | `package.json` says `UNLICENSED` and there is no LICENSE file. Choose one before publishing publicly. |
 | First version | `0.1.0` today. The version in `server.json` (both places) must equal the published npm version. |
 
 ## server.json
 
-Replace `NAMESPACE-OWNER` and save as `server.json` in the package root only when publishing.
+Save as `server.json` in the package root only when publishing.
 
 ```json
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "NAMESPACE-OWNER/shotomatic",
+  "name": "io.github.wyverselabs/shotomatic",
   "title": "Shotomatic",
   "description": "Capture screenshots, websites and click-by-click guides in the Shotomatic Mac app and export them.",
   "version": "0.1.0",
   "websiteUrl": "https://shotomatic.com",
+  "repository": {
+    "url": "https://github.com/wyverselabs/shotomatic-cli",
+    "source": "github"
+  },
   "packages": [
     {
       "registryType": "npm",
@@ -71,7 +75,7 @@ One line:
 
 Paragraph:
 
-> Shotomatic is a Mac app for automated, repeatable screenshot capture. This package is a small stdio bridge that lets MCP clients such as Claude Code and Codex talk to the MCP server built into the app, over a local Unix socket. Agents can capture many pages of a window in a row (ebooks, slides), capture websites and run saved Website Capture Workflows, record step-by-step guides, edit the resulting Documents and export them as PDF, PNG, JPG, WebP, ZIP or MP4. Everything stays on your Mac: the bridge has no dependencies and makes no network connections. You turn access on in Settings > AI agents and approve each agent once; deleting items, purging history and scheduling Workflows ask for confirmation in the app. Requires macOS and Shotomatic with AI agents support.
+> Shotomatic is a Mac app for automated, repeatable screenshot capture. This package is a small stdio bridge that lets MCP clients such as Claude Code and Codex (and others that run a local stdio server) talk to the MCP server built into the app, over a local Unix socket. Agents can capture many pages of a window in a row (ebooks, slides), capture websites and run saved Website Capture Workflows, record step-by-step guides, edit the resulting Documents and export them as PDF, PNG, JPG, WebP, ZIP or MP4. Everything stays on your Mac: the bridge has no dependencies and makes no network connections. You turn access on in Settings > AI agents and approve each agent once; deleting items, purging history and scheduling Workflows ask for confirmation in the app. Requires macOS and Shotomatic with AI agents support.
 
 ## Install snippets
 
@@ -101,5 +105,17 @@ Generic JSON config (Claude Desktop and other clients that use `mcpServers`):
   }
 }
 ```
+
+Other clients (not tested with Shotomatic; formats follow each client's docs, checked 2026-11-11). Same command everywhere: `npx -y shotomatic mcp`.
+
+```sh
+amp mcp add shotomatic -- npx -y shotomatic mcp
+copilot mcp add shotomatic -- npx -y shotomatic mcp
+devin mcp add -s user shotomatic -- npx -y shotomatic mcp
+opencode mcp add shotomatic -- npx -y shotomatic mcp
+code --add-mcp '{"name":"shotomatic","type":"stdio","command":"npx","args":["-y","shotomatic","mcp"]}'
+```
+
+The generic `mcpServers` JSON above also fits Cline, Cursor (add `"type": "stdio"`), Gemini CLI (`~/.gemini/settings.json`), JetBrains AI Assistant and Junie (`~/.junie/mcp/mcp.json`), Kiro (`~/.kiro/settings/mcp.json`), LM Studio, Qwen Code (`~/.qwen/settings.json`), Roo Code and Warp. VS Code uses `servers` with `"type": "stdio"` in `.vscode/mcp.json`, Zed uses `context_servers`, Continue uses a YAML file in `.continue/mcpServers/`, and Goose takes the command `npx -y shotomatic mcp` as a Standard IO extension. See the README's "Other MCP clients" section for locations.
 
 Before the first use: open Shotomatic, go to Settings > AI agents, turn on "Let AI agents use Shotomatic", and click Allow on the approval card when the agent first connects.

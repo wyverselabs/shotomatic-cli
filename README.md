@@ -1,6 +1,6 @@
 # shotomatic
 
-Stdio bridge that lets MCP clients (Claude Code, Claude Desktop, Codex) talk to the MCP server built into Shotomatic for Mac, the app for automated, repeatable screenshot capture.
+Stdio bridge that lets MCP clients (Claude Code, Claude Desktop, Codex and others) talk to the MCP server built into Shotomatic for Mac, the app for automated, repeatable screenshot capture.
 
 ## Requirements
 
@@ -43,6 +43,64 @@ Add this to `~/.codex/config.toml`:
 command = "npx"
 args = ["-y", "shotomatic", "mcp"]
 ```
+
+### Other MCP clients
+
+Tested with Claude Code and Codex. The clients below use the same MCP standard; these steps follow each client's own documentation (checked 2026-11-11) and have not been tested with Shotomatic. Command `npx`, arguments `-y shotomatic mcp`, no environment variables.
+
+Commands:
+
+```sh
+amp mcp add shotomatic -- npx -y shotomatic mcp                    # Amp
+copilot mcp add shotomatic -- npx -y shotomatic mcp                # GitHub Copilot CLI
+devin mcp add -s user shotomatic -- npx -y shotomatic mcp          # Devin (Windsurf)
+opencode mcp add shotomatic -- npx -y shotomatic mcp               # OpenCode (add --global for all projects)
+code --add-mcp '{"name":"shotomatic","type":"stdio","command":"npx","args":["-y","shotomatic","mcp"]}'   # VS Code, user profile
+```
+
+Add the same `mcpServers` entry as Claude Desktop (above) to the file or screen below:
+
+| Client | Where |
+| ------ | ----- |
+| Cline | MCP Servers icon > Configure > Configure MCP Servers (CLI: `~/.cline/data/settings/cline_mcp_settings.json`) |
+| Cursor | `~/.cursor/mcp.json` or `.cursor/mcp.json`; add `"type": "stdio"` |
+| Gemini CLI | `~/.gemini/settings.json` or `.gemini/settings.json` (stdio servers connect only in a trusted folder) |
+| JetBrains AI Assistant | Settings > Tools > AI Assistant > Model Context Protocol (MCP) > Add |
+| Junie | `~/.junie/mcp/mcp.json` or `.junie/mcp/mcp.json` |
+| Kiro | `~/.kiro/settings/mcp.json` or `.kiro/settings/mcp.json` |
+| LM Studio | Program tab > Install > Edit mcp.json |
+| Qwen Code | `~/.qwen/settings.json` or `.qwen/settings.json` |
+| Roo Code | MCP view > Edit Global MCP (`mcp_settings.json`) or Edit Project MCP (`.roo/mcp.json`) |
+| Warp | Settings > Agents > MCP servers > + Add, paste the JSON |
+
+Clients with a different format:
+
+```json
+// VS Code: .vscode/mcp.json ("servers", and "type" is required)
+{ "servers": { "shotomatic": { "type": "stdio", "command": "npx", "args": ["-y", "shotomatic", "mcp"] } } }
+
+// Zed: settings.json ("zed: open settings file")
+{ "context_servers": { "shotomatic": { "command": "npx", "args": ["-y", "shotomatic", "mcp"], "env": {} } } }
+
+// OpenCode V2: opencode.jsonc (V1 uses a different layout; prefer the command above)
+{ "mcp": { "servers": { "shotomatic": { "type": "local", "command": ["npx", "-y", "shotomatic", "mcp"] } } } }
+```
+
+```yaml
+# Continue (Agent mode only): .continue/mcpServers/shotomatic.yaml
+name: Shotomatic
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: Shotomatic
+    type: stdio
+    command: npx
+    args: ["-y", "shotomatic", "mcp"]
+```
+
+Goose: Extensions > Add custom extension > Type "Standard IO", Command `npx -y shotomatic mcp`, or `goose configure` > Add Extension > Command-line Extension.
+
+If a desktop client cannot find `npx`, run `which npx` in Terminal and use that full path as the command; `npx` also needs `node` on its `PATH`.
 
 ## Tools
 
