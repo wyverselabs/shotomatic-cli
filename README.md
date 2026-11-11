@@ -171,4 +171,4 @@ Everything stays on your Mac. The bridge only relays bytes between your MCP clie
 
 ## License
 
-Unlicensed for now; the owner has not chosen a license yet.
+MIT. See [LICENSE](LICENSE).
