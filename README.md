@@ -134,6 +134,15 @@ Things to know:
 
 The app listens on a Unix socket at `~/Library/Application Support/Shotomatic/mcp/mcp.sock` and speaks MCP over newline-delimited JSON-RPC. `shotomatic mcp` copies stdin to that socket and the socket to stdout, and exits when either side closes. If the app is not running, the bridge starts it once in the background (without bringing it to the front) and waits for the socket.
 
+## Compatibility
+
+The bridge only carries MCP bytes between your client and the app's local socket; it knows nothing about individual tools. The app decides which tools exist, and your MCP client reads them from the app each time it connects. So:
+
+- Every `0.x` release of this package works with every Shotomatic version that has AI agents support. Updating the app adds or changes tools without a new bridge release, and `npx -y shotomatic mcp` always runs the latest bridge.
+- The MCP protocol version is negotiated between your client and the app, not by the bridge.
+- This package follows semantic versioning. Only a change to how the bridge finds or talks to the app (the socket location or the transport) is a breaking change; it would come as a new major version, and the app would keep accepting the previous one for a transition period. If that ever happens, a table of app and bridge versions will be added here.
+- To see what the running app offers, ask your agent to call `get_status`: it reports the app version and a tool surface version.
+
 ## Options
 
 ```
