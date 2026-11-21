@@ -49,7 +49,7 @@ test("--version prints the package version", async () => {
   const result = await run(["--version"]);
   assert.equal(result.code, 0);
   assert.equal(result.stdout.trim(), readVersion());
-  assert.equal(readVersion(), "0.1.0");
+  assert.equal(readVersion(), "0.2.0");
 });
 
 test("unknown command prints usage to stderr and exits 2", async () => {

@@ -1,16 +1,16 @@
 ---
 name: shotomatic
-description: Drive the Shotomatic Mac app over MCP to capture many screenshots in a row (ebooks, Kindle, slides), capture web pages, record click-by-click guides, and turn captures into Documents exported as PDF, images, ZIP or MP4. Use when the user wants pages of an app or site saved as images or a PDF.
+description: Drive the Shotomatic app (Mac or Windows) over MCP to capture many screenshots in a row (ebooks, Kindle, slides), capture web pages, record click-by-click guides, and turn captures into Documents exported as PDF, images, ZIP or MP4. Use when the user wants pages of an app or site saved as images or a PDF.
 ---
 
 # Shotomatic
 
-Shotomatic runs on the user's Mac. Its tools only work while the app is open and the user has turned on Settings > AI agents ("Let AI agents use Shotomatic"). Until the user clicks Allow on the approval card in Shotomatic, only `get_status` answers; the other tools fail with `approval_required`, so ask the user to click Allow and try again.
+Shotomatic runs on the user's computer (Mac or Windows). Its tools only work while the app is open and the user has turned on Settings > AI agents ("Let AI agents use Shotomatic"). Until the user clicks Allow on the approval card in Shotomatic, only `get_status` answers; the other tools fail with `approval_required`, so ask the user to click Allow and try again.
 
 ## Always
 
 - Start with `get_status`. Fix what it reports first: missing Screen Recording or Accessibility permission, `approval: "pending"`, the plan and its limits.
-- Captures use the user's screen. Tell the user not to use the Mac until the job ends.
+- Captures use the user's screen. Tell the user not to use the computer until the job ends.
 - Start tools return a job. Wait with `get_job {jobId, waitSeconds: 50, until: "done"}`; do not poll in a tight loop.
 - Free plan limits are real: 3 screenshots per Auto Capture and 9 per day, 5 steps per Action Capture, 3 URLs per website batch. Say so before you start, relay `license_limit` and `pro_feature` errors with their message, and never work around them.
 - Errors are JSON with `code`, `message` and often `userAction`. Tell the user what `userAction` says.
@@ -51,7 +51,7 @@ A Workflow is a named list of pages and options that can run on a schedule (`web
 
 - Run one now with `capture_websites {workflowId}`.
 - A schedule is an interval of at least 5 minutes or a daily time with an IANA timezone. Saving a Workflow with a schedule, or resuming one, needs the user's confirmation in Shotomatic. Pausing does not. There is no delete.
-- Workflows run only while Shotomatic is open. Runs missed while the app was closed or the Mac slept are not caught up. A scheduled run that cannot start (another capture running, no browser, plan limit, offline) is recorded with a reason and waits for the next time. Tell the user this before setting a schedule.
+- Workflows run only while Shotomatic is open. Runs missed while the app was closed or the computer slept are not caught up. A scheduled run that cannot start (another capture running, no browser, plan limit, offline) is recorded with a reason and waits for the next time. Tell the user this before setting a schedule.
 
 ## Editing rules
 
