@@ -27,7 +27,7 @@ mcp-publisher publish
 | Namespace / server name | `io.github.wyverselabs/shotomatic` (GitHub organization namespace). `package.json` carries the same string as `"mcpName"`. Publishing to the registry needs an owner of the `wyverselabs` organization: `mcp-publisher login github` with a token that has the organization, or GitHub Actions OIDC from this repository. |
 | GitHub repository URL | `https://github.com/wyverselabs/shotomatic-cli` (private until the package is published; the registry listing needs it public). |
 | License | MIT (`LICENSE`, copyright Wyverse Labs). |
-| First version | `0.1.0` today. The version in `server.json` (both places) must equal the published npm version. |
+| First version | `0.2.0`, the first release that also runs on Windows. The version in `server.json` (both places) must equal the published npm version. |
 
 ## server.json
 
@@ -38,8 +38,8 @@ Save as `server.json` in the package root only when publishing.
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.wyverselabs/shotomatic",
   "title": "Shotomatic",
-  "description": "Capture screenshots, websites and click-by-click guides in the Shotomatic Mac app and export them.",
-  "version": "0.1.0",
+  "description": "Capture screenshots, websites and click-by-click guides in the Shotomatic app and export them.",
+  "version": "0.2.0",
   "websiteUrl": "https://shotomatic.com",
   "repository": {
     "url": "https://github.com/wyverselabs/shotomatic-cli",
@@ -49,7 +49,7 @@ Save as `server.json` in the package root only when publishing.
     {
       "registryType": "npm",
       "identifier": "shotomatic",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
@@ -65,17 +65,17 @@ Save as `server.json` in the package root only when publishing.
 }
 ```
 
-The description above is 98 characters (the limit is 100). No environment variables are needed.
+The description above is 94 characters (the limit is 100). No environment variables are needed.
 
 ## Listing text
 
 One line:
 
-> Let AI agents capture screenshots, websites and click-by-click guides in the Shotomatic Mac app and export them as PDF, images or video.
+> Let AI agents capture screenshots, websites and click-by-click guides in the Shotomatic app on Mac or Windows and export them as PDF, images or video.
 
 Paragraph:
 
-> Shotomatic is a Mac app for automated, repeatable screenshot capture. This package is a small stdio bridge that lets MCP clients such as Claude Code and Codex (and others that run a local stdio server) talk to the MCP server built into the app, over a local Unix socket. Agents can capture many pages of a window in a row (ebooks, slides), capture websites and run saved Website Capture Workflows, record step-by-step guides, edit the resulting Documents and export them as PDF, PNG, JPG, WebP, ZIP or MP4. Everything stays on your Mac: the bridge has no dependencies and makes no network connections. You turn access on in Settings > AI agents and approve each agent once; deleting items, purging history and scheduling Workflows ask for confirmation in the app. Requires macOS and Shotomatic with AI agents support.
+> Shotomatic is a Mac and Windows app for automated, repeatable screenshot capture. This package is a small stdio bridge that lets MCP clients such as Claude Code and Codex (and others that run a local stdio server) talk to the MCP server built into the app, over a local Unix socket on macOS or a named pipe on Windows. Agents can capture many pages of a window in a row (ebooks, slides), capture websites and run saved Website Capture Workflows, record step-by-step guides, edit the resulting Documents and export them as PDF, PNG, JPG, WebP, ZIP or MP4. Everything stays on your computer: the bridge has no dependencies and makes no network connections. You turn access on in Settings > AI agents and approve each agent once; deleting items, purging history and scheduling Workflows ask for confirmation in the app. Requires macOS or Windows and Shotomatic with AI agents support.
 
 ## Install snippets
 
