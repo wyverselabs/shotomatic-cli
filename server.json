@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.wyverselabs/shotomatic",
+  "title": "Shotomatic",
+  "description": "Capture screenshots, websites and click-by-click guides in the Shotomatic app and export them.",
+  "version": "0.2.0",
+  "websiteUrl": "https://shotomatic.com",
+  "repository": {
+    "url": "https://github.com/wyverselabs/shotomatic-cli",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "shotomatic",
+      "version": "0.2.0",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ]
+}
