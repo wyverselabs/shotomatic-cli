@@ -1,71 +1,34 @@
 # MCP registry listing
 
-Materials for listing `shotomatic` in the official MCP registry (https://github.com/modelcontextprotocol/registry). Nothing here has been submitted. This folder is not shipped in the npm package (`files` allowlist).
-
-Every value marked **OWNER** can only be supplied by the owner.
+Materials for listing `shotomatic` in the official MCP registry (https://github.com/modelcontextprotocol/registry). The listing itself is `server.json` in the repository root; `.github/workflows/publish-mcp-registry.yml` publishes it. This folder is not shipped in the npm package (`files` allowlist).
 
 ## How the registry works (read from its docs, schema 2025-12-11)
 
 - The registry stores metadata only. The npm package must be published first; `server.json` points at it.
-- Ownership of an npm package is checked through an `mcpName` field in the **published** `package.json`. It must equal the `name` in `server.json`. It is not in `package.json` yet because the namespace is an owner decision. Add it before `npm publish`, otherwise the first version cannot be listed and a new version is needed.
-- The namespace in `name` follows the login method:
-  - GitHub login (`mcp-publisher login github`): `io.github.<user-or-org>/shotomatic`. A personal namespace works with the device login. An organization namespace needs an org Owner and, today, a token or GitHub Actions (`mcp-publisher login github --token ...`), not the device flow.
-  - Domain login (DNS TXT record on the apex of the domain, or an HTTP file): `com.shotomatic/shotomatic` for the domain `shotomatic.com`. The owner must control that domain's DNS.
-- `description` is limited to 100 characters. `version` must be a concrete version (no ranges, not `latest`), and the package `version` must match what is on npm.
-- Submission, run by the owner after `npm publish`:
+- Ownership of an npm package is checked through the `mcpName` field in the **published** `package.json`. It must equal the `name` in `server.json`.
+- The namespace in `name` follows the login method. `io.github.wyverselabs/*` is a GitHub organization namespace: it needs an org Owner, and `mcp-publisher login github` (device flow) cannot grant it today, so this repository publishes through GitHub Actions OIDC instead.
+- `description` is limited to 100 characters. `version` must be a concrete version (no ranges, not `latest`), and the package `version` must match what is on npm. A published registry version cannot be changed; fixes need a new version.
 
-```sh
-mcp-publisher login github      # or: mcp-publisher login dns ...
-mcp-publisher validate
-mcp-publisher publish
-```
+## Releasing a version
 
-## Decisions and values for the owner
+1. Set the same version in `package.json` and in both places in `server.json`.
+2. Merge, then `npm publish` from `main` (npm asks for 2FA in the browser).
+3. Push the tag `v<version>`. The workflow checks that the versions match and that npm has the version, then lists it in the registry. It can also be run by hand from the Actions tab (`workflow_dispatch`) on `main`.
+
+Check locally with `mcp-publisher validate` before merging.
+
+## Values
 
 | Item | Value |
 | ---- | ----- |
-| Namespace / server name | `io.github.wyverselabs/shotomatic` (GitHub organization namespace). `package.json` carries the same string as `"mcpName"`. Publishing to the registry needs an owner of the `wyverselabs` organization: `mcp-publisher login github` with a token that has the organization, or GitHub Actions OIDC from this repository. |
-| GitHub repository URL | `https://github.com/wyverselabs/shotomatic-cli` (private until the package is published; the registry listing needs it public). |
+| Namespace / server name | `io.github.wyverselabs/shotomatic` (GitHub organization namespace). `package.json` carries the same string as `"mcpName"`. Published by GitHub Actions OIDC from this repository. |
+| GitHub repository URL | `https://github.com/wyverselabs/shotomatic-cli` (public, so the listing's source link works). |
 | License | MIT (`LICENSE`, copyright Wyverse Labs). |
 | First version | `0.2.0`, the first release that also runs on Windows. The version in `server.json` (both places) must equal the published npm version. |
 
 ## server.json
 
-Save as `server.json` in the package root only when publishing.
-
-```json
-{
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.wyverselabs/shotomatic",
-  "title": "Shotomatic",
-  "description": "Capture screenshots, websites and click-by-click guides in the Shotomatic app and export them.",
-  "version": "0.2.0",
-  "websiteUrl": "https://shotomatic.com",
-  "repository": {
-    "url": "https://github.com/wyverselabs/shotomatic-cli",
-    "source": "github"
-  },
-  "packages": [
-    {
-      "registryType": "npm",
-      "identifier": "shotomatic",
-      "version": "0.2.0",
-      "runtimeHint": "npx",
-      "transport": {
-        "type": "stdio"
-      },
-      "packageArguments": [
-        {
-          "type": "positional",
-          "value": "mcp"
-        }
-      ]
-    }
-  ]
-}
-```
-
-The description above is 94 characters (the limit is 100). No environment variables are needed.
+See `server.json` in the repository root. Its description is 94 characters (the limit is 100). No environment variables are needed.
 
 ## Listing text
 
