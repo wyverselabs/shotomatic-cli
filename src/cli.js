@@ -10,6 +10,8 @@ import { resolveTarget } from "./socketPath.js";
 import { MAIN_USAGE, MCP_USAGE } from "./usage.js";
 import { readVersion } from "./version.js";
 
+const SUPPORTED_PLATFORMS = new Set(["darwin", "win32"]);
+
 const defaultContext = () => ({
   env: process.env,
   platform: process.platform,
@@ -22,13 +24,20 @@ const defaultContext = () => ({
 });
 
 const runMcp = async (options, context) => {
-  if (context.platform !== "darwin") throw unsupportedPlatform(context.platform);
-  const target = resolveTarget({ socket: options.socket, appName: options.appName, homedir: context.homedir });
+  if (!SUPPORTED_PLATFORMS.has(context.platform)) throw unsupportedPlatform(context.platform);
+  const target = resolveTarget({
+    socket: options.socket,
+    appName: options.appName,
+    homedir: context.homedir,
+    platform: context.platform,
+    env: context.env,
+  });
   const log = options.verbose ? (line) => context.stderr.write(`shotomatic: ${line}\n`) : () => {};
   const signals = watchSignals(context.signals);
   try {
     const socket = await connectWithLaunch({
       target,
+      platform: context.platform,
       launch: options.launch,
       waitSeconds: options.waitSeconds,
       launcher: context.launcher,

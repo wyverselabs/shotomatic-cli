@@ -1,10 +1,10 @@
 # shotomatic
 
-Stdio bridge that lets MCP clients (Claude Code, Claude Desktop, Codex and others) talk to the MCP server built into Shotomatic for Mac, the app for automated, repeatable screenshot capture.
+Stdio bridge that lets MCP clients (Claude Code, Claude Desktop, Codex and others) talk to the MCP server built into Shotomatic, the app for automated, repeatable screenshot capture.
 
 ## Requirements
 
-- macOS, and Node 18.3 or later.
+- macOS or Windows, and Node 18.3 or later.
 - Shotomatic with AI agents support. Older versions of the app have no MCP server for this bridge to connect to.
 - Access turned on: open Shotomatic, go to Settings > AI agents, and turn on "Let AI agents use Shotomatic".
 - A one-time approval: the first time an agent connects, Shotomatic shows an approval card. Click Allow. Until you do, every tool except `get_status` answers `approval_required`. You can remove an approved agent later in Settings > AI agents.
@@ -132,7 +132,7 @@ Things to know:
 
 ## How it works
 
-The app listens on a Unix socket at `~/Library/Application Support/Shotomatic/mcp/mcp.sock` and speaks MCP over newline-delimited JSON-RPC. `shotomatic mcp` copies stdin to that socket and the socket to stdout, and exits when either side closes. If the app is not running, the bridge starts it once in the background (without bringing it to the front) and waits for the socket.
+On macOS the app listens on a Unix socket at `~/Library/Application Support/Shotomatic/mcp/mcp.sock`. On Windows it listens on a named pipe under a random name that changes each time it starts listening, and writes that name to a file the bridge reads: `%APPDATA%\Shotomatic\mcp\pipe` for the website download, or `%USERPROFILE%\.shotomatic\mcp\pipe` for the Microsoft Store app (1.10.2 and later), which cannot share files it creates under AppData. If both files exist, the bridge reads the one written last. The pipe admits only the Windows user running Shotomatic and refuses network logons, so a bridge started from an SSH session or another computer cannot connect. Either way the app speaks MCP over newline-delimited JSON-RPC. `shotomatic mcp` copies stdin to the socket and the socket to stdout, and exits when either side closes. If the app is not running on macOS, the bridge starts it once in the background (without bringing it to the front) and waits for the socket. On Windows the bridge cannot start the app yet, so open Shotomatic first.
 
 ## Compatibility
 
@@ -140,6 +140,7 @@ The bridge only carries MCP bytes between your client and the app's local socket
 
 - Every `0.x` release of this package works with every Shotomatic version that has AI agents support. Updating the app adds or changes tools without a new bridge release, and `npx -y shotomatic mcp` always runs the latest bridge.
 - The MCP protocol version is negotiated between your client and the app, not by the bridge.
+- How the bridge finds the app is part of that contract: on macOS the socket at `~/Library/Application Support/<app name>/mcp/mcp.sock`; on Windows the pipe whose name the app writes, as the whole file content, to `%APPDATA%\<app name>\mcp\pipe` (website download) or `%USERPROFILE%\.shotomatic\mcp\pipe` (Microsoft Store app, stable profile only) each time it starts listening, and deletes when it stops.
 - This package follows semantic versioning. Only a change to how the bridge finds or talks to the app (the socket location or the transport) is a breaking change; it would come as a new major version, and the app would keep accepting the previous one for a transition period. If that ever happens, a table of app and bridge versions will be added here.
 - To see what the running app offers, ask your agent to call `get_status`: it reports the app version and a tool surface version.
 
@@ -148,7 +149,7 @@ The bridge only carries MCP bytes between your client and the app's local socket
 ```
 shotomatic mcp [options]
 
---socket <path>      Connect to this socket (env: SHOTOMATIC_MCP_SOCKET)
+--socket <path>      Connect to this socket or pipe (env: SHOTOMATIC_MCP_SOCKET)
 --app-name <name>    Target another profile, e.g. "Shotomatic (Dev)"
                      (env: SHOTOMATIC_APP_NAME)
 --wait <seconds>     Seconds to wait for the app after launching it (default 15)
@@ -165,18 +166,18 @@ Messages go to stderr, which MCP clients show in their server log. Each failure 
 
 | Exit | Message starts with | What to do |
 | ---- | ------------------- | ---------- |
-| 10 | Could not find "Shotomatic" on this Mac | Install Shotomatic for Mac and open it once. |
+| 10 | Could not find "Shotomatic" on this Mac / PC | Install Shotomatic and open it once. |
 | 11 | ... installed but MCP access is turned off | Open Shotomatic, go to Settings > AI agents, turn on "Let AI agents use Shotomatic", restart your MCP client. |
-| 12 | The socket ... exists but refuses connections | A crashed or force-quit app left a stale socket. Quit Shotomatic fully and reopen it; if it persists, delete the socket file. |
-| 13 | Permission denied while connecting | Run the MCP client as the same macOS user that runs Shotomatic. |
+| 12 | The socket ... exists but refuses connections / The pipe named in ... no longer exists | A crashed or force-quit app left a stale socket or pipe name. Quit Shotomatic fully and reopen it; if it persists, delete the socket file. |
+| 13 | Permission denied while connecting | Run the MCP client as the same user that runs Shotomatic. On Windows, also run it on that PC itself: Shotomatic refuses network logons, including SSH sessions. |
 | 14 | Timed out ... waiting for "Shotomatic" / ... is not running | Open Shotomatic yourself and check MCP access is on; use `--wait <seconds>` for slow starts. |
-| 15 | Shotomatic only runs on macOS | Run the bridge on the Mac that has Shotomatic. |
+| 15 | Shotomatic only runs on macOS and Windows | Run the bridge on the computer that has Shotomatic. |
 | 2 | usage text | Check the command and options. |
 | 1 | Connection ... was lost / Could not connect | Restart Shotomatic and your MCP client; run with `--verbose` for details. |
 
 ## Privacy
 
-Everything stays on your Mac. The bridge only relays bytes between your MCP client and the local Shotomatic app over a Unix socket. It does not inspect, store, or log messages, and it makes no network connections and has no dependencies.
+Everything stays on your computer. The bridge only relays bytes between your MCP client and the local Shotomatic app over a Unix socket or named pipe. It does not inspect, store, or log messages, and it makes no network connections and has no dependencies.
 
 ## License
 

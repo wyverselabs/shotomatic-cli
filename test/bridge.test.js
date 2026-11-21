@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import path from "node:path";
 import test from "node:test";
-import { echoOnConnection, makeTempDir, removeDir, runBin, startServer } from "./helpers.js";
+import { echoOnConnection, makeTempDir, removeDir, runBin, startServer, tempServerAddress } from "./helpers.js";
+
+const halfClose = { skip: process.platform === "win32" && "named pipes cannot half-close, so the server never sees a separate end" };
+const posixSignals = { skip: process.platform === "win32" && "Windows has no SIGTERM; kill() ends the process outright" };
 
 const withServer = async (onConnection, body) => {
   const dir = makeTempDir();
-  const socket = path.join(dir, "s.sock");
+  const socket = tempServerAddress(dir);
   const server = await startServer(socket, onConnection);
   try {
     await body(socket);
@@ -32,7 +35,7 @@ test("round trip of several newline-delimited messages, byte for byte", () =>
     assert.equal(result.stderr, "");
   }));
 
-test("server messages are relayed to stdout and client messages reach the server", () => {
+test("server messages are relayed to stdout and client messages reach the server", halfClose, () => {
   const received = [];
   return withServer(
     (conn) => {
@@ -74,7 +77,7 @@ test("a message split across chunks is not re-framed", () =>
     assert.equal(result.stdout.toString(), '{"jsonrpc":"2.0","id":7,"method":"ping"}\n');
   }));
 
-test("stdin EOF half-closes the socket and the bridge waits for the server to close", () => {
+test("stdin EOF half-closes the socket and the bridge waits for the server to close", halfClose, () => {
   let sawEnd = false;
   return withServer(
     (conn) => {
@@ -112,7 +115,7 @@ test("socket close exits 0 after flushing stdout while stdin stays open", () =>
     },
   ));
 
-test("SIGTERM closes the socket and exits promptly", () => {
+test("SIGTERM closes the socket and exits promptly", posixSignals, () => {
   let serverSawClose = false;
   return withServer(
     (conn) => conn.on("end", () => (serverSawClose = true)),

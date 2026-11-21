@@ -5,7 +5,7 @@ import { EventEmitter, once } from "node:events";
 import test from "node:test";
 import { main } from "../src/cli.js";
 import { readVersion } from "../src/version.js";
-import { makeTempDir, removeDir, runBin, startServer, echoOnConnection } from "./helpers.js";
+import { makeTempDir, removeDir, runBin, startServer, echoOnConnection, tempServerAddress, darwinOnly, windowsOnly } from "./helpers.js";
 import fs from "node:fs";
 import { spawn } from "node:child_process";
 
@@ -66,13 +66,74 @@ test("no command and invalid options exit 2", async () => {
   assert.equal((await run(["mcp", "--nope"])).code, 2);
 });
 
-test("non-macOS platforms get a clear message and a non-zero exit", async () => {
+test("platforms other than macOS and Windows get a clear message and a non-zero exit", async () => {
   const result = await run(["mcp"], { platform: "linux" });
   assert.equal(result.code, 15);
-  assert.match(result.stderr, /only runs on macOS/);
+  assert.match(result.stderr, /only runs on macOS and Windows/);
 });
 
-test("app not installed: profile directory absent with --no-launch", async () => {
+test("on Windows the bridge relays through the pipe named in the profile", windowsOnly, async () => {
+  const dir = makeTempDir();
+  const pipe = tempServerAddress(dir);
+  const server = await startServer(pipe, echoOnConnection);
+  try {
+    fs.mkdirSync(path.join(dir, "Shotomatic", "mcp"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "Shotomatic", "mcp", "pipe"), pipe);
+    const input = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n';
+    const { exited } = runBin(["mcp"], { env: { APPDATA: dir, USERPROFILE: dir }, input });
+    const result = await exited;
+    assert.equal(result.code, 0);
+    assert.equal(result.stdout.toString("utf8"), input);
+  } finally {
+    server.close();
+    removeDir(dir);
+  }
+});
+
+test("on Windows the bridge relays through the pipe the Microsoft Store app names in the user's profile", windowsOnly, async () => {
+  const dir = makeTempDir();
+  const pipe = tempServerAddress(dir);
+  const server = await startServer(pipe, echoOnConnection);
+  try {
+    fs.mkdirSync(path.join(dir, ".shotomatic", "mcp"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".shotomatic", "mcp", "pipe"), pipe);
+    const input = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n';
+    const { exited } = runBin(["mcp"], { env: { APPDATA: path.join(dir, "Roaming"), USERPROFILE: dir }, input });
+    const result = await exited;
+    assert.equal(result.code, 0);
+    assert.equal(result.stdout.toString("utf8"), input);
+  } finally {
+    server.close();
+    removeDir(dir);
+  }
+});
+
+test("on Windows a pipe name left behind by a crashed app is reported as stale", windowsOnly, async () => {
+  const dir = makeTempDir();
+  try {
+    fs.mkdirSync(path.join(dir, "Shotomatic", "mcp"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "Shotomatic", "mcp", "pipe"), tempServerAddress(dir));
+    const result = await run(["mcp"], { platform: "win32", env: { APPDATA: dir } });
+    assert.equal(result.code, 12);
+    assert.match(result.stderr, /no longer exists/);
+  } finally {
+    removeDir(dir);
+  }
+});
+
+test("on Windows a profile without a published pipe name means the app is not running", windowsOnly, async () => {
+  const dir = makeTempDir();
+  try {
+    fs.mkdirSync(path.join(dir, "Shotomatic", "mcp"), { recursive: true });
+    const result = await run(["mcp"], { platform: "win32", env: { APPDATA: dir } });
+    assert.equal(result.code, 14);
+    assert.match(result.stderr, /cannot start it on Windows/);
+  } finally {
+    removeDir(dir);
+  }
+});
+
+test("app not installed: profile directory absent with --no-launch", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     const socket = path.join(dir, "Missing App", "mcp", "mcp.sock");
@@ -85,7 +146,7 @@ test("app not installed: profile directory absent with --no-launch", async () =>
   }
 });
 
-test("MCP access off: profile exists but socket directory is absent", async () => {
+test("MCP access off: profile exists but socket directory is absent", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     fs.mkdirSync(path.join(dir, "Shotomatic"));
@@ -99,7 +160,7 @@ test("MCP access off: profile exists but socket directory is absent", async () =
   }
 });
 
-test("stale socket: file exists but refuses connections", async () => {
+test("stale socket: file exists but refuses connections", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     const socket = path.join(dir, "s.sock");
@@ -120,7 +181,7 @@ test("stale socket: file exists but refuses connections", async () => {
   }
 });
 
-test("permission denied on the socket", async (t) => {
+test("permission denied on the socket", darwinOnly, async (t) => {
   if (process.getuid?.() === 0) return t.skip("root bypasses socket permissions");
   const dir = makeTempDir();
   try {
@@ -136,7 +197,7 @@ test("permission denied on the socket", async (t) => {
   }
 });
 
-test("app not running with --no-launch and an existing directory", async () => {
+test("app not running with --no-launch and an existing directory", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     const result = await run(["mcp", "--no-launch", "--socket", path.join(dir, "s.sock")]);
@@ -147,7 +208,7 @@ test("app not running with --no-launch and an existing directory", async () => {
   }
 });
 
-test("timeout after launching the app once", async () => {
+test("timeout after launching the app once", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     let launches = 0;
@@ -168,7 +229,7 @@ test("timeout after launching the app once", async () => {
   }
 });
 
-test("launch failure maps to app not installed", async () => {
+test("launch failure maps to app not installed", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     const result = await run(["mcp", "--app-name", "Nope", "--socket", path.join(dir, "s.sock")], {
@@ -180,7 +241,7 @@ test("launch failure maps to app not installed", async () => {
   }
 });
 
-test("connects after the launched app creates its socket, and never launches twice", async () => {
+test("connects after the launched app creates its socket, and never launches twice", darwinOnly, async () => {
   const dir = makeTempDir();
   let server;
   try {
@@ -213,7 +274,7 @@ test("connects after the launched app creates its socket, and never launches twi
   }
 });
 
-test("explicit socket without an app name never launches", async () => {
+test("explicit socket without an app name never launches", darwinOnly, async () => {
   const dir = makeTempDir();
   try {
     const result = await run(["mcp", "--socket", path.join(dir, "s.sock")]);
@@ -223,7 +284,7 @@ test("explicit socket without an app name never launches", async () => {
   }
 });
 
-test("a normal failure-free session writes nothing to stderr, --verbose writes diagnostics", async () => {
+test("a normal failure-free session writes nothing to stderr, --verbose writes diagnostics", darwinOnly, async () => {
   const dir = makeTempDir();
   let server;
   try {
@@ -251,7 +312,7 @@ test("--app-name rejects paths so the launcher can only open a profile by name",
   }
 });
 
-test("a socket path longer than a Unix socket allows gets a clear error, not EINVAL", async () => {
+test("a socket path longer than a Unix socket allows gets a clear error, not EINVAL", darwinOnly, async () => {
   const long = path.join("/tmp", "x".repeat(120), "s.sock");
   const result = await run(["mcp", "--no-launch", "--socket", long]);
   assert.equal(result.code, 2);
