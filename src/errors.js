@@ -9,6 +9,7 @@ export class BridgeError extends Error {
 }
 
 const isWindows = (platform) => platform === "win32";
+const anyOf = (paths) => paths.join(" or ");
 
 export const unsupportedPlatform = (platform) =>
   new BridgeError(
@@ -30,10 +31,10 @@ export const appNotInstalled = (appName, platform) => {
   );
 };
 
-export const mcpAccessOff = (appName, directory) =>
+export const mcpAccessOff = (appName, directories) =>
   new BridgeError(
     ExitCode.mcpAccessOff,
-    `"${appName}" is installed but MCP access is turned off (no socket directory at ${directory}). ` +
+    `"${appName}" is installed but MCP access is turned off (no socket directory at ${anyOf(directories)}). ` +
       `Open Shotomatic, go to Settings > AI agents, turn on \"Let AI agents use Shotomatic\", then restart your MCP client. ` +
       `If you just started the app, wait a few seconds and try again.`,
   );
@@ -76,17 +77,17 @@ export const timedOut = (appName, socketPath, seconds) =>
       `Use --wait <seconds> to wait longer.`,
   );
 
-export const appNotRunning = (appName, socketPath, platform) => {
+export const appNotRunning = (appName, endpointPaths, platform) => {
   const nextStep = `Open Shotomatic, make sure Settings > AI agents is turned on, then restart your MCP client.`;
   if (isWindows(platform)) {
     return new BridgeError(
       ExitCode.timeout,
-      `"${appName}" is not running (no pipe name at ${socketPath}), and the bridge cannot start it on Windows. ${nextStep}`,
+      `"${appName}" is not running (no pipe name at ${anyOf(endpointPaths)}), and the bridge cannot start it on Windows. ${nextStep}`,
     );
   }
   return new BridgeError(
     ExitCode.timeout,
-    `"${appName}" is not running (no socket at ${socketPath}) and launching was disabled. ${nextStep}`,
+    `"${appName}" is not running (no socket at ${anyOf(endpointPaths)}) and launching was disabled. ${nextStep}`,
   );
 };
 

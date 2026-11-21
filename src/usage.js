@@ -27,7 +27,9 @@ Options:
   -h, --help           Show help
 
 Default socket (macOS): ~/Library/Application Support/Shotomatic/mcp/mcp.sock
-Default pipe (Windows): the name in %APPDATA%\\Shotomatic\\mcp\\pipe
+Default pipe (Windows): the name in %USERPROFILE%\\.shotomatic\\mcp\\pipe
+                        (Microsoft Store app) or %APPDATA%\\Shotomatic\\mcp\\pipe
+                        (website download), whichever the app wrote last
 
 Exit codes:
   0   session ended normally

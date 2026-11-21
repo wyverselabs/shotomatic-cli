@@ -12,6 +12,7 @@ import {
   staleSocket,
   timedOut,
 } from "./errors.js";
+import { latestPipeNameFile } from "./socketPath.js";
 
 const POLL_INTERVAL_MS = 250;
 const MAX_SOCKET_PATH_BYTES = 103;
@@ -28,11 +29,22 @@ const sleep = (ms, interrupt) =>
   });
 const exists = (target) => fs.existsSync(target);
 
-const endpointPathOf = (target) => target.socketPath ?? target.pipeNameFile;
+const publishedPipeNameFile = (target) => {
+  if (target.pipeNameFiles === undefined) return undefined;
+  return latestPipeNameFile(target.pipeNameFiles);
+};
+
+const endpointPathsOf = (target) => target.pipeNameFiles ?? [target.socketPath];
+
+const endpointPathOf = (target) => target.socketPath ?? publishedPipeNameFile(target) ?? target.pipeNameFiles.join(" or ");
+
+const noPublishedPipeName = () => Object.assign(new Error("No pipe name file found"), { code: "ENOENT" });
 
 const resolveAddress = async (target) => {
-  if (target.pipeNameFile === undefined) return target.socketPath;
-  return (await fs.promises.readFile(target.pipeNameFile, "utf8")).trim();
+  if (target.pipeNameFiles === undefined) return target.socketPath;
+  const pipeNameFile = latestPipeNameFile(target.pipeNameFiles);
+  if (pipeNameFile === undefined) throw noPublishedPipeName();
+  return (await fs.promises.readFile(pipeNameFile, "utf8")).trim();
 };
 
 const connectToTarget = async (target) => connectOnce(await resolveAddress(target));
@@ -45,16 +57,18 @@ const failureFor = ({ error, target, platform, launched, waitSeconds }) => {
   if (error.code === "EACCES" || error.code === "EPERM") return permissionDenied(socketPath, platform);
   if (error.code === "ECONNREFUSED") return staleSocket(socketPath);
   if (error.code !== "ENOENT" && error.code !== "ENOTDIR") return connectionFailed(socketPath, error);
-  if (target.pipeNameFile !== undefined && exists(target.pipeNameFile)) return stalePipeName(target.pipeNameFile);
+  const pipeNameFile = publishedPipeNameFile(target);
+  if (pipeNameFile !== undefined) return stalePipeName(pipeNameFile);
 
-  const socketDirectory = paths.dirname(socketPath);
-  if (!exists(socketDirectory)) {
-    const profileDirectory = paths.dirname(socketDirectory);
-    if (!launched && !exists(profileDirectory)) return appNotInstalled(appName, platform);
-    return mcpAccessOff(appName, socketDirectory);
+  const endpointPaths = endpointPathsOf(target);
+  const socketDirectories = endpointPaths.map((endpointPath) => paths.dirname(endpointPath));
+  if (!socketDirectories.some(exists)) {
+    const profileDirectories = socketDirectories.map((directory) => paths.dirname(directory));
+    if (!launched && !profileDirectories.some(exists)) return appNotInstalled(appName, platform);
+    return mcpAccessOff(appName, socketDirectories);
   }
   if (launched) return timedOut(appName, socketPath, waitSeconds);
-  return appNotRunning(appName, socketPath, platform);
+  return appNotRunning(appName, endpointPaths, platform);
 };
 
 const isFatalImmediately = (error) => error.code === "EACCES" || error.code === "EPERM" || error.code === "EINVAL";

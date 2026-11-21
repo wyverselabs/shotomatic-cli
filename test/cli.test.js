@@ -80,7 +80,25 @@ test("on Windows the bridge relays through the pipe named in the profile", windo
     fs.mkdirSync(path.join(dir, "Shotomatic", "mcp"), { recursive: true });
     fs.writeFileSync(path.join(dir, "Shotomatic", "mcp", "pipe"), pipe);
     const input = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n';
-    const { exited } = runBin(["mcp"], { env: { APPDATA: dir }, input });
+    const { exited } = runBin(["mcp"], { env: { APPDATA: dir, USERPROFILE: dir }, input });
+    const result = await exited;
+    assert.equal(result.code, 0);
+    assert.equal(result.stdout.toString("utf8"), input);
+  } finally {
+    server.close();
+    removeDir(dir);
+  }
+});
+
+test("on Windows the bridge relays through the pipe the Microsoft Store app names in the user's profile", windowsOnly, async () => {
+  const dir = makeTempDir();
+  const pipe = tempServerAddress(dir);
+  const server = await startServer(pipe, echoOnConnection);
+  try {
+    fs.mkdirSync(path.join(dir, ".shotomatic", "mcp"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".shotomatic", "mcp", "pipe"), pipe);
+    const input = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n';
+    const { exited } = runBin(["mcp"], { env: { APPDATA: path.join(dir, "Roaming"), USERPROFILE: dir }, input });
     const result = await exited;
     assert.equal(result.code, 0);
     assert.equal(result.stdout.toString("utf8"), input);
